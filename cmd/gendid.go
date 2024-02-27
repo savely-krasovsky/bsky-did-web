@@ -44,7 +44,7 @@ func generateDid(cmd *cobra.Command, args []string) error {
 		Id:          "did:web:" + handle,
 		AlsoKnownAs: []string{"at://" + handle},
 		VerificationMethod: []*VerificationMethod{{
-			ID:                 "did:web:" + handle + "#athandle",
+			ID:                 "did:web:" + handle + "#atproto",
 			Type:               "Multikey",
 			Controller:         "did:web:" + handle,
 			PublicKeyMultibase: pubkey,
