@@ -22,6 +22,7 @@ var (
 	privkeyStr string
 	iss        string
 	aud        string
+	lxm        string
 	exp        int
 )
 
@@ -34,7 +35,13 @@ func init() {
 	signCmd.MarkFlagRequired("iss")
 	signCmd.Flags().StringVar(&aud, "aud", "", "Audience; PDS on which you want to register")
 	signCmd.MarkFlagRequired("aud")
+	signCmd.Flags().StringVar(&lxm, "lxm", "", "Lexicon Method; authorized scope")
 	signCmd.Flags().IntVar(&exp, "exp", 60, "Expire at; amount of second token will be alive")
+}
+
+type AtprotoCustomClaims struct {
+	Lxm string `json:"lxm,omitempty"`
+	jwt.RegisteredClaims
 }
 
 func sign(cmd *cobra.Command, args []string) error {
@@ -44,11 +51,15 @@ func sign(cmd *cobra.Command, args []string) error {
 	}
 
 	jwt.MarshalSingleStringAsArray = false
-	token := jwt.NewWithClaims(jwt.SigningMethodES256, jwt.RegisteredClaims{
-		Issuer:    iss,
-		Audience:  jwt.ClaimStrings{aud},
-		ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Duration(exp) * time.Second)),
-	})
+	claims := AtprotoCustomClaims{
+		lxm,
+		jwt.RegisteredClaims{
+			Issuer:    iss,
+			Audience:  jwt.ClaimStrings{aud},
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Duration(exp) * time.Second)),
+		},
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodES256, claims)
 
 	tokenString, err := token.SignedString(privkey)
 	if err != nil {
