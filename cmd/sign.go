@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"bsky.watch/jwt-go-secp256k1"
 	"github.com/spf13/cobra"
 )
 
@@ -59,7 +60,7 @@ func sign(cmd *cobra.Command, args []string) error {
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Duration(exp) * time.Second)),
 		},
 	}
-	token := jwt.NewWithClaims(jwt.SigningMethodES256, claims)
+	token := jwt.NewWithClaims(secp256k1.SigningMethodES256K, claims)
 
 	tokenString, err := token.SignedString(privkey)
 	if err != nil {
