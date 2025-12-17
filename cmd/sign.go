@@ -4,10 +4,12 @@ Copyright © 2024 Savely Krasovsky <savely@krasovs.ky>
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"bsky.watch/jwt-go-secp256k1"
 	"github.com/spf13/cobra"
 )
 
@@ -23,6 +25,7 @@ var (
 	iss        string
 	aud        string
 	lxm        string
+	alg        string = "ES256"
 	exp        int
 )
 
@@ -35,6 +38,7 @@ func init() {
 	signCmd.MarkFlagRequired("iss")
 	signCmd.Flags().StringVar(&aud, "aud", "", "Audience; PDS on which you want to register")
 	signCmd.MarkFlagRequired("aud")
+	signCmd.Flags().StringVar(&alg, "alg", "", "Algorithm; must be ES256 (default) or ES256K")
 	signCmd.Flags().StringVar(&lxm, "lxm", "", "Lexicon Method; authorized scope")
 	signCmd.Flags().IntVar(&exp, "exp", 60, "Expire at; amount of second token will be alive")
 }
@@ -59,7 +63,14 @@ func sign(cmd *cobra.Command, args []string) error {
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Duration(exp) * time.Second)),
 		},
 	}
-	token := jwt.NewWithClaims(jwt.SigningMethodES256, claims)
+	var signingMethod jwt.SigningMethod = jwt.SigningMethodES256
+	if alg == "ES256K" {
+		signingMethod = secp256k1.SigningMethodES256K
+	} else if alg != "ES256" && alg != "" {
+		err := errors.New("Unknown alg value")
+		return err
+	}
+	token := jwt.NewWithClaims(signingMethod, claims)
 
 	tokenString, err := token.SignedString(privkey)
 	if err != nil {
